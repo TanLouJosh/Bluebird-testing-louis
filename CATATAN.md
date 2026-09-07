@@ -55,3 +55,8 @@ Tiap penambahan metode baru butuh masukkan transaction type baru, masih agak man
 -
 ## Bagian yang dibantu AI (kalau ada)
 Tidak untuk ini
+
+## Kalau setiap transaksi menanyakan tarif ke database, apa masalahnya? Apa yang akan Anda lakukan?
+Bisa ada race condition, harus ada lock/control akses dbnya
+banyak transaksi juga bisa sebabkan bottleneck
+## Bagaimana Anda memastikan hasil perhitungan tidak berubah setelah perubahan ini?
