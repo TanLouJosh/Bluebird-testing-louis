@@ -26,12 +26,23 @@ func (c Car) GetPriceCredit() int {
 	return (c.Price * 102) / 100
 }
 
+func (c Car) GetPriceDynamic(rate int) int {
+	return (c.Price * (rate + 100)) / 100
+}
+
 type TransactionType int
 
 const (
 	TransTypeCash TransactionType = iota
 	TransTypeCredit
+	TransTypeLeasing
 )
+
+var PriceRates = map[TransactionType]int{
+	TransTypeCash:    0,
+	TransTypeCredit:  2,
+	TransTypeLeasing: 5,
+}
 
 type TradeInTransaction struct {
 	Car             Car
@@ -59,6 +70,9 @@ func main() {
 
 	fmt.Println("Cash ", c.GetPriceCash())
 	fmt.Println("Credit ", c.GetPriceCredit())
+	fmt.Println("Cash Dynamic ", c.GetPriceDynamic(PriceRates[TransTypeCash]))
+	fmt.Println("Credit Dynamic ", c.GetPriceDynamic(PriceRates[TransTypeCredit]))
+	fmt.Println("Leasing Dynamic ", c.GetPriceDynamic(PriceRates[TransTypeLeasing]))
 
 	tit := TradeInTransaction{Car: c, TradeInPrice: 50000000, TransactionType: TransTypeCash}
 	tit_total, err := tit.GetTotalPrice()

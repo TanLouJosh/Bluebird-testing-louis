@@ -11,7 +11,7 @@ struct untuk simpan semua data mobil dalam satu halaman, harga saya buat functio
 ## Bagian yang dibantu AI (kalau ada)
 Tidak untuk ini
 
-## Step 3
+## Step 2
 ## Apa yang saya ubah
 1) Buat struct baru buat trade in transaction
 2) Error saya jadikan list sendiri
@@ -26,3 +26,20 @@ Tidak untuk ini
 -
 ## Bagian yang dibantu AI (kalau ada)
 Tidak untuk ini
+
+## Step 3
+## Apa yang saya ubah
+1) Buat map buaru untuk menyimpan rate
+2) Buat function baru untuk menghitung harga secara dynamic
+## Kenapa begitu
+1) Buat map yang gampang berkembang untuk tiap metode pembayaran baru
+2) Buat function yang bisa digunakan ulang dengan map baru
+## Apa yang saya pertimbangkan tapi tidak saya pilih, dan kenapa
+-
+## Yang saya rasa masih kurang
+-
+## Bagian yang dibantu AI (kalau ada)
+Tidak untuk ini
+
+## Apa yang menjadi lebih sulit setelah perubahan ini?
+Tiap penambahan metode baru butuh masukkan transaction type baru, masih agak manual
