@@ -60,3 +60,4 @@ Tidak untuk ini
 Bisa ada race condition, harus ada lock/control akses dbnya
 banyak transaksi juga bisa sebabkan bottleneck
 ## Bagaimana Anda memastikan hasil perhitungan tidak berubah setelah perubahan ini?
+Penggunaan mutex
