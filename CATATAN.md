@@ -43,3 +43,15 @@ Tidak untuk ini
 
 ## Apa yang menjadi lebih sulit setelah perubahan ini?
 Tiap penambahan metode baru butuh masukkan transaction type baru, masih agak manual
+
+## Step 4
+## Apa yang saya ubah
+1) Tambahkan fake interface, repo, dan service
+## Kenapa begitu
+1) Buat interface agar service menjadi lebih luas dan bis adaptasi db pisah"
+## Apa yang saya pertimbangkan tapi tidak saya pilih, dan kenapa
+-
+## Yang saya rasa masih kurang
+-
+## Bagian yang dibantu AI (kalau ada)
+Tidak untuk ini
