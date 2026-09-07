@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -25,6 +26,39 @@ func TestCar(t *testing.T) {
 			if credit_result != cas.desired_price_credit {
 				t.Errorf("credit: got %d, want %d", credit_result, cas.desired_price_credit)
 			}
+		})
+	}
+}
+
+func TestTradeIn(t *testing.T) {
+	c := Car{ID: 1, Brand: "", Model: "", Year: "", Price: 200000000}
+	tit_cash := TradeInTransaction{Car: c, TradeInPrice: 50000000, TransactionType: TransTypeCash}
+	tit_credit := TradeInTransaction{Car: c, TradeInPrice: 50000000, TransactionType: TransTypeCredit}
+	tit_cash_error := TradeInTransaction{Car: c, TradeInPrice: 500000000000, TransactionType: TransTypeCash}
+	tit_credit_error := TradeInTransaction{Car: c, TradeInPrice: 500000000000, TransactionType: TransTypeCredit}
+
+	cases := []struct {
+		name               string
+		tit                TradeInTransaction
+		desire_price_error bool
+	}{
+		{"Correct cash", tit_cash, false},
+		{"Correct credit", tit_credit, false},
+		{"Testing Error cash", tit_cash_error, true},
+		{"Testing Error credit", tit_credit_error, true},
+	}
+
+	for _, cas := range cases {
+		t.Run(cas.name, func(t *testing.T) {
+			total_result, err := cas.tit.GetTotalPrice()
+			if err != nil && !cas.desire_price_error {
+				t.Error(err)
+			} else if cas.desire_price_error {
+				if ErrNegativePrice != err {
+					t.Errorf("Error untriggered ErrNegativePrice")
+				}
+			}
+			fmt.Println(cas.name+" succeed got ", total_result)
 		})
 	}
 }
