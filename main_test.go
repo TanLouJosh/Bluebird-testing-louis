@@ -62,23 +62,58 @@ import (
 // 	}
 // }
 
-func TestCarPriceDynamic(t *testing.T) {
+// func TestCarPriceDynamic(t *testing.T) {
+// 	cases := []struct {
+// 		name                  string
+// 		car                   Car
+// 		desired_dynamic_price int
+// 		trans_type            TransactionType
+// 	}{
+// 		{"Base test cash", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 200000000, TransTypeCash},
+// 		{"Base test credit", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 204000000, TransTypeCredit},
+// 		{"Base test dynamic", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 210000000, TransTypeLeasing},
+// 	}
+
+// 	for _, cas := range cases {
+// 		t.Run(cas.name, func(t *testing.T) {
+// 			result := cas.car.GetPriceDynamic(PriceRates[cas.trans_type])
+// 			if result != cas.desired_dynamic_price {
+// 				t.Errorf("cash: got %d, want %d", result, cas.desired_dynamic_price)
+// 			}
+// 		})
+// 	}
+// }
+
+func TestFakeDB(t *testing.T) {
+
 	cases := []struct {
 		name                  string
-		car                   Car
 		desired_dynamic_price int
 		trans_type            TransactionType
 	}{
-		{"Base test cash", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 200000000, TransTypeCash},
-		{"Base test credit", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 204000000, TransTypeCredit},
-		{"Base test dynamic", Car{ID: 1, Brand: "XXX", Model: "XXX", Year: "XXX", Price: 200000000}, 210000000, TransTypeLeasing},
+		{"Base test cash", 200000000, TransTypeCash},
+		{"Base test credit", 204000000, TransTypeCredit},
+		{"Base test dynamic", 210000000, TransTypeLeasing},
 	}
 
 	for _, cas := range cases {
 		t.Run(cas.name, func(t *testing.T) {
-			result := cas.car.GetPriceDynamic(PriceRates[cas.trans_type])
-			if result != cas.desired_dynamic_price {
-				t.Errorf("cash: got %d, want %d", result, cas.desired_dynamic_price)
+			srdb := ShowroomDatabase{
+				table_car:            map[int]Car{},
+				table_payment_method: map[int]PaymentMethod{},
+			}
+
+			service := Service{
+				repo: srdb,
+			}
+			service.AddCar(1, "Brand", "Model", "Year", 200000000)
+			service.AddMethod(1, "Method", PriceRates[cas.trans_type])
+			price, err := service.QuotePrice(1, 1)
+			if err != nil {
+				t.Error(err)
+			}
+			if price != cas.desired_dynamic_price {
+				t.Errorf("cash: got %d, want %d", price, cas.desired_dynamic_price)
 			}
 		})
 	}
