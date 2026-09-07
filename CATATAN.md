@@ -55,3 +55,21 @@ Tiap penambahan metode baru butuh masukkan transaction type baru, masih agak man
 -
 ## Bagian yang dibantu AI (kalau ada)
 Tidak untuk ini
+
+## Kalau setiap transaksi menanyakan tarif ke database, apa masalahnya? Apa yang akan Anda lakukan?
+Bisa ada race condition, harus ada lock/control akses dbnya banyak transaksi juga bisa sebabkan bottleneck
+
+## Bagaimana Anda memastikan hasil perhitungan tidak berubah setelah perubahan ini?
+Penggunaan mutex
+
+## Step 5
+## Apa yang saya ubah
+1) Tambahkan mutex dna wg untuk fake spam ubahan di db
+## Kenapa begitu
+1) Mutex pastikan tidak 2 proses mengedit hal sama
+## Apa yang saya pertimbangkan tapi tidak saya pilih, dan kenapa
+-
+## Yang saya rasa masih kurang
+-
+## Bagian yang dibantu AI (kalau ada)
+Tidak untuk ini

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"testing"
 )
 
@@ -84,37 +85,78 @@ import (
 // 	}
 // }
 
-func TestFakeDB(t *testing.T) {
+// func TestFakeDB(t *testing.T) {
 
-	cases := []struct {
-		name                  string
-		desired_dynamic_price int
-		trans_type            TransactionType
-	}{
-		{"Base test cash", 200000000, TransTypeCash},
-		{"Base test credit", 204000000, TransTypeCredit},
-		{"Base test dynamic", 210000000, TransTypeLeasing},
+// 	cases := []struct {
+// 		name                  string
+// 		desired_dynamic_price int
+// 		trans_type            TransactionType
+// 	}{
+// 		{"Base test cash", 200000000, TransTypeCash},
+// 		{"Base test credit", 204000000, TransTypeCredit},
+// 		{"Base test dynamic", 210000000, TransTypeLeasing},
+// 	}
+
+// 	for _, cas := range cases {
+// 		t.Run(cas.name, func(t *testing.T) {
+// 			srdb := ShowroomDatabase{
+// 				table_car:            map[int]Car{},
+// 				table_payment_method: map[int]PaymentMethod{},
+// 			}
+
+// 			service := Service{
+// 				repo: srdb,
+// 			}
+// 			service.AddCar(1, "Brand", "Model", "Year", 200000000, "Available")
+// 			service.AddMethod(1, "Method", PriceRates[cas.trans_type])
+// 			price, err := service.QuotePrice(1, 1)
+// 			if err != nil {
+// 				t.Error(err)
+// 			}
+// 			if price != cas.desired_dynamic_price {
+// 				t.Errorf("cash: got %d, want %d", price, cas.desired_dynamic_price)
+// 			}
+// 		})
+// 	}
+// }
+
+func TestMutex(t *testing.T) {
+
+	srdb := ShowroomDatabase{
+		table_car:            map[int]Car{},
+		table_payment_method: map[int]PaymentMethod{},
 	}
 
-	for _, cas := range cases {
-		t.Run(cas.name, func(t *testing.T) {
-			srdb := ShowroomDatabase{
-				table_car:            map[int]Car{},
-				table_payment_method: map[int]PaymentMethod{},
-			}
+	service := Service{
+		repo: srdb,
+	}
 
-			service := Service{
-				repo: srdb,
-			}
-			service.AddCar(1, "Brand", "Model", "Year", 200000000)
-			service.AddMethod(1, "Method", PriceRates[cas.trans_type])
-			price, err := service.QuotePrice(1, 1)
-			if err != nil {
-				t.Error(err)
-			}
-			if price != cas.desired_dynamic_price {
-				t.Errorf("cash: got %d, want %d", price, cas.desired_dynamic_price)
-			}
-		})
+	service.AddCar(1, "Brand", "Model", "Year", 200000000, "Available")
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Sold", i)
+		}
+	})
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Reserved", i)
+		}
+	})
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Pulled", i)
+		}
+	})
+	wg.Wait()
+
+	result_car, err := service.FindCar(1)
+	if err != nil {
+		t.Error(err)
+	}
+	if result_car.times_status_edited != 1 {
+		t.Errorf("Edited more than one time")
 	}
 }

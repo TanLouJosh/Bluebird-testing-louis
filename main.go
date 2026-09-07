@@ -4,19 +4,23 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 )
 
 var (
 	ErrNegativePrice = errors.New("trade has a negative price")
 	ItemDoesntExist  = errors.New("Item Doesnt Exist")
+	CarNotAvailable  = errors.New("CarNotAvailable")
 )
 
 type Car struct {
-	ID    int
-	Brand string
-	Model string
-	Year  string
-	Price int
+	ID                  int
+	Brand               string
+	Model               string
+	Year                string
+	Price               int
+	status              string
+	times_status_edited int
 }
 
 func (c Car) GetPriceCash() int {
@@ -74,14 +78,16 @@ type PaymentMethod struct {
 }
 
 type ShowroomRepository interface {
-	AddCar(ID int, Brand string, Model string, Year string, Price int) error
+	AddCar(ID int, Brand string, Model string, Year string, Price int, Status string) error
 	AddMethod(ID int, Method string, Rate int) error
 
 	FindOneCar(ID int) (Car, error)
+	UpdateCarStatus(ID int, new_status string, status_update_id int) error
 	FindOneMethod(ID int) (PaymentMethod, error)
 }
 
 type Service struct {
+	mu   sync.Mutex
 	repo ShowroomRepository
 }
 
@@ -89,8 +95,8 @@ func NewService(repo ShowroomRepository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) AddCar(ID int, Brand string, Model string, Year string, Price int) error {
-	s.repo.AddCar(ID, Brand, Model, Year, Price)
+func (s *Service) AddCar(ID int, Brand string, Model string, Year string, Price int, Status string) error {
+	s.repo.AddCar(ID, Brand, Model, Year, Price, Status)
 	return nil
 }
 
@@ -111,13 +117,39 @@ func (s *Service) QuotePrice(car_id int, pay_method_id int) (int, error) {
 	return car.GetPriceDynamic(pay_method.Rate), nil
 }
 
+func (s *Service) FindCar(car_id int) (Car, error) {
+	car, err := s.repo.FindOneCar(car_id)
+	if err != nil {
+		return Car{}, fmt.Errorf("car price: %w", err)
+	}
+	return car, nil
+}
+
+func (s *Service) FindCarStatus(car_id int) (string, error) {
+	car, err := s.repo.FindOneCar(car_id)
+	if err != nil {
+		return "", fmt.Errorf("car price: %w", err)
+	}
+	return car.status, nil
+}
+
+func (s *Service) UpdateCarStatus(car_id int, new_status string, status_update_id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	err := s.repo.UpdateCarStatus(car_id, new_status, status_update_id)
+	if err != nil {
+		return fmt.Errorf("car price: %w", err)
+	}
+	return nil
+}
+
 type ShowroomDatabase struct {
 	table_car            map[int]Car
 	table_payment_method map[int]PaymentMethod
 }
 
-func (sd ShowroomDatabase) AddCar(ID int, Brand string, Model string, Year string, Price int) error {
-	sd.table_car[ID] = Car{ID, Brand, Model, Year, Price}
+func (sd ShowroomDatabase) AddCar(ID int, Brand string, Model string, Year string, Price int, Status string) error {
+	sd.table_car[ID] = Car{ID, Brand, Model, Year, Price, Status, 0}
 
 	return nil
 }
@@ -135,6 +167,22 @@ func (sd ShowroomDatabase) FindOneCar(ID int) (Car, error) {
 	}
 
 	return result, nil
+}
+
+func (sd ShowroomDatabase) UpdateCarStatus(ID int, new_status string, status_update_id int) error {
+	result, ok := sd.table_car[ID]
+	if !ok {
+		return ItemDoesntExist
+	}
+	if result.status != "Available" {
+		return CarNotAvailable
+	}
+	result.status = new_status
+	result.times_status_edited = result.times_status_edited + 1
+	fmt.Println("Car status updated ", status_update_id, " to ", result.status)
+
+	sd.table_car[ID] = result
+	return nil
 }
 
 func (sd ShowroomDatabase) FindOneMethod(ID int) (PaymentMethod, error) {
@@ -176,7 +224,7 @@ func UseFakeDb() {
 		repo: srdb,
 	}
 
-	service.AddCar(1, "Brand", "Model", "Year", 200000000)
+	service.AddCar(1, "Brand", "Model", "Year", 200000000, "Available")
 	service.AddMethod(1, "Method", 5)
 	price, err := service.QuotePrice(1, 1)
 	if err != nil {
@@ -186,4 +234,39 @@ func UseFakeDb() {
 	}
 
 	fmt.Println("Price ", price)
+
+	status, err := service.FindCarStatus(1)
+	if err != nil {
+		fmt.Println("Error tit")
+		log.Fatal(err)
+		return
+	}
+	fmt.Println("Status ", status)
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Sold", i)
+		}
+	})
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Reserved", i)
+		}
+	})
+	wg.Go(func() {
+		for i := range 10000 {
+			service.UpdateCarStatus(1, "Pulled", i)
+		}
+	})
+	wg.Wait()
+	status, err = service.FindCarStatus(1)
+	if err != nil {
+		fmt.Println("Error tit")
+		log.Fatal(err)
+		return
+	}
+	fmt.Println("Status ", status)
+
 }
